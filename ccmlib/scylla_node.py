@@ -431,15 +431,15 @@ class ScyllaNode(Node):
             jvm_args = []
         raise NotImplementedError('ScyllaNode.start_dse')
 
-    def _update_jmx_pid(self):
+    def _update_jmx_pid(self, wait=False):
         pidfile = os.path.join(self.get_path(), 'scylla-jmx.pid')
 
         start = time.time()
         while not (os.path.isfile(pidfile) and os.stat(pidfile).st_size > 0):
-            if time.time() - start > 30.0:
+            if time.time() - start > 30.0 or not wait:
                 print_("Timed out waiting for pidfile to be filled "
                        "(current time is %s)" % (datetime.datetime.now()))
-                break
+                return
             else:
                 time.sleep(0.1)
 
@@ -469,9 +469,8 @@ class ScyllaNode(Node):
                 marks = [(node, node.mark_log()) for node in
                          list(self.cluster.nodes.values()) if
                          node.is_live() and node is not self]
-            self._update_jmx_pid()
-
             if self._process_jmx and self._process_scylla:
+                self._update_jmx_pid(wait=False)
                 if gently:
                     try:
                         self._process_jmx.terminate()
