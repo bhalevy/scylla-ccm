@@ -409,6 +409,7 @@ def scylla_extract_mode(path):
     #   url=../scylla/build/debug/scylla-package.tar.gz
     m = re.search('(^|/)build/(\w+)(/|$)', path)
     if m:
+        print("Extracted mode {} from {}".format(m.group(2), path))
         return m.group(2)
 
     # path/url examples:
