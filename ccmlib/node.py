@@ -1845,7 +1845,10 @@ def _grep_log_for_errors(log, distinct_errors=False, search_str=None, case_sensi
     matchings = []
     it = iter(log.splitlines())
 
+    assertion_re = re.compile(r'Assertion.*failed')
     def is_error_line(l):
+        if 'Aborting' in l or assertion_re.search(l):
+            return True
         if search_str:
             return search_str in l
         return 'ERROR' in l and 'DEBUG' not in l.split('ERROR')[0]
