@@ -1844,11 +1844,15 @@ def _get_row_cache_entries_from_info_output(info):
 def _grep_log_for_errors(log, distinct_errors=False, search_str=None, case_sensitive=True):
     matchings = []
     it = iter(log.splitlines())
+
+    def is_error_line(l):
+        if search_str:
+            return search_str in l
+        return 'ERROR' in l and 'DEBUG' not in l.split('ERROR')[0]
+
     for line in it:
         l = line if case_sensitive else line.lower()
-        is_error_line = ('ERROR' in l and
-                         'DEBUG' not in l.split('ERROR')[0]) if not search_str else search_str in l
-        if is_error_line:
+        if is_error_line(l):
             append_line = line if not search_str else l[l.rfind(search_str):]
             if not distinct_errors:
                 append_line = [append_line]
