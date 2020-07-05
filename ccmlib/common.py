@@ -582,15 +582,19 @@ def get_version_from_build(install_dir=None, node_path=None):
         install_dir = get_install_dir_from_cluster_conf(node_path)
     if install_dir is not None:
         if isScylla(install_dir):
+            print("Scylla install_dir {}: version 3.0".format(install_dir))
             return '3.0'    # return cassandra-compatible version
         # Binary cassandra installs will have a 0.version.txt file
         version_file = os.path.join(install_dir, '0.version.txt')
         if os.path.exists(version_file):
             with open(version_file) as f:
-                return f.read().strip()
+                version = f.read().strip()
+                print("Not scylla install_dir {}: version {} based on 0.version.txt".format(install_dir, version))
+                return version
         # For DSE look for a dse*.jar and extract the version number
         dse_version = get_dse_version(install_dir)
         if (dse_version is not None):
+            print("Not scylla install_dir {}: dse_version {}".format(install_dir, dse_version))
             return dse_version
         # Source cassandra installs we can read from build.xml
         build = os.path.join(install_dir, 'build.xml')
@@ -598,20 +602,24 @@ def get_version_from_build(install_dir=None, node_path=None):
             for line in f:
                 match = re.search('name="base\.version" value="([0-9.]+)[^"]*"', line)
                 if match:
+                    print("Not scylla install_dir {}: version {} based on build.xml".format(install_dir, match.group(1)))
                     return match.group(1)
     raise CCMError("Cannot find version")
 
 
 def get_scylla_version(install_dir):
+    ret = None
     if isScylla(install_dir):
+        ret = '3.0'
         scylla_version_files = [ os.path.join(install_dir, 'build', 'SCYLLA-VERSION-FILE'),
                                  os.path.join(install_dir, 'scylla-core-package', 'SCYLLA-VERSION-FILE') ]
         for version_file in scylla_version_files:
+            print("{} {}exist".format(version_file, "" if os.path.exists(version_file) else "does not "))
             if os.path.exists(version_file):
-                return open(version_file).read().strip()
-        return '3.0'
-    else:
-        return None
+                ret = open(version_file).read().strip()
+                break
+    print("scylla_version: {}".format(ret))
+    return ret
 
 
 def get_dse_version(install_dir):
