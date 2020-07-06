@@ -20,7 +20,7 @@ from six.moves import urllib
 from six import BytesIO
 
 from ccmlib.common import (
-    ArgumentError, get_default_path, rmdirs, validate_install_dir, get_scylla_version)
+    ArgumentError, get_default_path, rmdirs, validate_install_dir, get_version_from_build)
 from ccmlib.repository import __download
 
 GIT_REPO = "http://github.com/scylladb/scylla.git"
@@ -72,7 +72,7 @@ def setup(version, verbose=True):
             cdir, 'scylla-core-package'), cdir)
     setup_scylla_manager()
 
-    return cdir, get_scylla_version(cdir)
+    return cdir, get_version_from_build(cdir)
 
 
 def setup_scylla_manager():
