@@ -316,6 +316,8 @@ class ScyllaNode(Node):
                 raise NodeError(f"Error starting node {self.name}",
                                 self._process_scylla)
 
+        self.node_hostid = None
+
         if wait_for_binary_proto:
             t = self.cluster.default_wait_for_binary_proto
             from_mark = self.mark
