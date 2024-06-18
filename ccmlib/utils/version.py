@@ -30,11 +30,11 @@ class ComparableScyllaVersion:
 
     def __init__(self, version_string: str):
         parsed_version = self.parse(version_string)
-        self.v_major = int(parsed_version[0])
-        self.v_minor = int(parsed_version[1])
-        self.v_patch = int(parsed_version[2])
-        self.v_pre_release = parsed_version[3] or ''
-        self.v_build = parsed_version[4] or ''
+        self.v_major = parsed_version["major"]
+        self.v_minor = parsed_version["minor"]
+        self.v_patch = parsed_version["patch"]
+        self.v_pre_release = parsed_version["prerelease"]
+        self.v_build = parsed_version["build"]
 
     @staticmethod
     def parse(version_string: str):
@@ -55,7 +55,9 @@ class ComparableScyllaVersion:
 
         # NOTE: make short scylla version like '5.2' be correct semver string
         _scylla_version_parts = re.split(r'\.|-', _scylla_version)
-        if len(_scylla_version_parts) == 2:
+        if len(_scylla_version_parts) == 1:
+            _scylla_version = f"{_scylla_version}.0.0"
+        elif len(_scylla_version_parts) == 2:
             _scylla_version = f"{_scylla_version}.0"
         elif len(_scylla_version_parts) > 2 and re.search(
                 r"\D+", _scylla_version_parts[2].split("-")[0]):
@@ -74,7 +76,10 @@ class ComparableScyllaVersion:
             _scylla_version = f"{dotted_build_id_match[1]}+{dotted_build_id_match[3]}"
 
         if match := SEMVER_REGEX.match(_scylla_version):
-            return match.groups()
+            ret = dict()
+            for key in ["major", "minor", "patch", "prerelease", "build"]:
+                ret[key] = match.group(key) or ""
+            return ret
         raise ValueError(
             f"Cannot parse provided '{version_string}' scylla_version for the comparison. "
             f"Transformed scylla_version: {_scylla_version}")
@@ -86,6 +91,9 @@ class ComparableScyllaVersion:
         if self.v_build:
             result += f"+{self.v_build}"
         return result
+    
+    def __repr__(self):
+        return self.__str__()
 
     def _transform_to_comparable(self, other):
         if isinstance(other, str):
@@ -99,6 +107,15 @@ class ComparableScyllaVersion:
         #       any of the 'pre-release' ones.
         #       So, make empty 'pre-release' prevail over any defined one.
         return (self.v_major, self.v_minor, self.v_patch, self.v_pre_release or 'xyz')
+    
+    def major(self):
+        return ComparableScyllaVersion(f"{self.v_major}")
+
+    def minor(self):
+        return ComparableScyllaVersion(f"{self.v_major}.{self.v_minor}")
+
+    def patch(self):
+        return ComparableScyllaVersion(f"{self.v_major}.{self.v_minor}.{self.v_patch}")
 
     def __lt__(self, other):
         return self.as_comparable() < self._transform_to_comparable(other).as_comparable()
